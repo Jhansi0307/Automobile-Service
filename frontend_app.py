@@ -10,7 +10,7 @@ from typing import Optional
 
 # Config
 
-API_BASE = os.getenv("API_BASE", "http://127.0.0.1:8000/api")
+API_BASE = os.getenv("API_BASE", "https://automobile-service-99o7.onrender.com/api")
 TIMEOUT = 10
 
 st.set_page_config(page_title="Automobile Service Manager", layout="wide")
