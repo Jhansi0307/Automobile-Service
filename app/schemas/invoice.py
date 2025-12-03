@@ -59,9 +59,17 @@ class InvoiceCreate(BaseModel):
             raise ValueError("Parts cost must be between 0 and 200,000")
         return v
 
-class InvoiceOut(InvoiceCreate):
-    total_cost: float
+class InvoiceOut(BaseModel):
     id: int
+    invoice_id: str
+    name: str
+    issue_date: date
+    due_date: date
+    currency: str
+    labor_cost: float
+    parts_cost: float
+    total_cost: float
+    notes: Optional[str] = None
 
     class Config:
         orm_mode = True

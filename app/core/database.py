@@ -4,17 +4,14 @@ from sqlalchemy.orm import declarative_base   # << IMPORTANT
 
 from app.core.config import DATABASE_URL
 
-# SQLAlchemy Base Model
-Base = declarative_base()   # << THIS MUST EXIST
+Base = declarative_base()  
 
-# Engine
 engine = create_engine(
     DATABASE_URL,
     pool_pre_ping=True,
     future=True,
 )
 
-# Scoped session for thread safety
 SessionLocal = scoped_session(
     sessionmaker(
         autocommit=False,
@@ -23,7 +20,6 @@ SessionLocal = scoped_session(
     )
 )
 
-# Initialize DB Tables
 def init_db():
     import app.models.customer
     import app.models.vehicle

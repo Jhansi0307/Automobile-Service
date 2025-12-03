@@ -3,7 +3,6 @@ from fastapi import FastAPI
 from app.core.database import init_db
 from app.core.database import SessionLocal
 
-# Import all routers (updated paths)
 from app.routers import (
     customers,
     vehicles,
@@ -14,7 +13,6 @@ from app.routers import (
     invoices,
 )
 
-# Import all models so SQLAlchemy knows them and can create tables
 from app.models.customer import Customer
 from app.models.vehicle import Vehicle
 from app.models.mechanic import Mechanic
@@ -22,7 +20,7 @@ from app.models.part import Part
 from app.models.service_request import ServiceRequest
 from app.models.repair_entry import RepairEntry
 from app.models.invoice import Invoice
-    
+  
 # FastAPI App
 app = FastAPI(
     title="Automobile Service Management API",
@@ -42,9 +40,9 @@ A complete backend system for managing automobile service operations, including:
 )
 
 init_db()
-# ==========================
+
 # ROUTER REGISTRATIONS
-# ==========================
+
 app.include_router(
     service_requests.router,
     prefix="/api/service_requests",
@@ -87,12 +85,7 @@ app.include_router(
     tags=["Repair History"]
 )
     
-
-
-# ==========================
 # ROOT HEALTH CHECK
-# ==========================
-
 @app.get("/")
 def root():
     return {"message": "Automobile Service API is running successfully!"}

@@ -4,9 +4,9 @@ from datetime import date
 import re
 from app.core.config import ALLOWED_STATUSES, now_date
 
-# ============================================
+
 # INPUT SCHEMA (validators apply here only)
-# ============================================
+
 class ServiceRequestCreate(BaseModel):
     customer_name: Optional[str] = Field(None, max_length=100)
     vehicle_vin: Optional[str] = Field(None, max_length=50)
@@ -14,7 +14,7 @@ class ServiceRequestCreate(BaseModel):
     status: str
     priority: int
     status_completion_date: date
-    description: Optional[str]
+    description: Optional[str] = None
 
     @validator("status")
     def status_must_be_allowed(cls, v):
@@ -41,18 +41,18 @@ class ServiceRequestCreate(BaseModel):
         return v
 
 
-# ============================================
+
 # OUTPUT SCHEMA (NO VALIDATORS)
-# ============================================
+
 class ServiceRequestOut(BaseModel):
     id: int
-    customer_name: Optional[str]
-    vehicle_vin: Optional[str]
+    customer_name: Optional[str] = None
+    vehicle_vin: Optional[str] = None
     mechanic_name: str
     status: str
     priority: int
     status_completion_date: date
-    description: Optional[str]
+    description: Optional[str] = None
 
     class Config:
         orm_mode = True
