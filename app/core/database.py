@@ -1,10 +1,15 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
-from sqlalchemy.orm import declarative_base   # << IMPORTANT
-
+from sqlalchemy.orm import declarative_base
+from sqlalchemy.engine.url import make_url
 from app.core.config import DATABASE_URL
 
-Base = declarative_base()  
+Base = declarative_base()
+
+# Ensure ssl requirement for Neon
+url_obj = make_url(DATABASE_URL)
+if "sslmode" not in url_obj.query:
+    DATABASE_URL = f"{DATABASE_URL}&sslmode=require"
 
 engine = create_engine(
     DATABASE_URL,
@@ -21,6 +26,9 @@ SessionLocal = scoped_session(
 )
 
 def init_db():
+    """
+    Imports all ORM models and ensures tables exist.
+    """
     import app.models.customer
     import app.models.vehicle
     import app.models.mechanic

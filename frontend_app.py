@@ -10,8 +10,9 @@ from typing import Optional
 
 # Config
 
-API_BASE = os.getenv("API_BASE", "https://automobile-service-99o7.onrender.com/api")
-# API_BASE = os.getenv("API_BASE", "http://127.0.0.1:8000/api")
+# API_BASE = os.getenv("API_BASE", "https://automobile-service-99o7.onrender.com/api")
+
+API_BASE = os.getenv("API_BASE", "http://127.0.0.1:8000/api")
 TIMEOUT = 10
 
 st.set_page_config(page_title="Automobile Service Manager", layout="wide")
@@ -85,13 +86,13 @@ page = st.sidebar.radio(
     "Menu",
     [
         "Dashboard",
+        "Service Requests",
+        "Invoices",
         "Customers",
         "Vehicles",
         "Mechanics",
         "Parts",
-        "Service Requests",
         "Repair Entries",
-        "Invoices",
     ],
 )
 
@@ -437,6 +438,9 @@ elif page == "Invoices":
     st.title("Invoices")
     tab1, tab2 = st.tabs(["List Invoices", "Create Invoice"])
 
+    
+    # TAB 1 — LIST + DELETE INVOICES
+    
     with tab1:
         s, r = api_get("/invoices/")
         if s == 200:
@@ -445,6 +449,7 @@ elif page == "Invoices":
                 if c in df.columns:
                     df[c] = df[c].apply(lambda v: f"{v:,.2f}")
             st.dataframe(df, use_container_width=True)
+
             st.markdown("### Delete Invoice")
             iid = st.number_input("Invoice ID to delete", min_value=0, value=0)
             if st.button("Delete Invoice"):
@@ -452,42 +457,100 @@ elif page == "Invoices":
                     s2, r2 = api_delete(f"/invoices/{iid}")
                     show_api_response(s2, r2)
                 else:
-                    st.warning("Enter valid invoice id")
+                    st.warning("Enter valid invoice ID")
         else:
             st.error("Failed to load invoices")
             st.json(r)
 
+    
+    # TAB 2 — CREATE INVOICE
+    
     with tab2:
         with st.form("invoice_form"):
+
             invoice_id = st.text_input("Invoice ID (INV-12345)")
-            name = st.text_input("Name")
+            name = st.text_input("Customer Name")
+
             issue_date = st.date_input("Issue Date", date.today())
             due_date = st.date_input("Due Date", date.today())
+
             currency = st.selectbox("Currency", ["INR", "USD", "EUR"])
-            labor_cost = st.number_input("Labor cost", min_value=0.0, max_value=50000.0, value=0.0)
-            parts_cost = st.number_input("Parts cost", min_value=0.0, max_value=200000.0, value=0.0)
+
+            # ---- safer numeric inputs via text ----
+            labor_cost_str = st.text_input("Labor Cost (0 - 50000)", "0")
+            parts_cost_str = st.text_input("Parts Cost (0 - 200000)", "0")
+
             submitted = st.form_submit_button("Create Invoice")
+
+        # OUTSIDE form → handle validation
         if submitted:
             errors = []
-            if not re.fullmatch(r"INV-\d{5}", invoice_id.strip()): errors.append("Invoice id format INV-12345")
-            if not name.strip(): errors.append("Name required")
-            if issue_date > date.today(): errors.append("Issue date in future")
-            if due_date < date.today(): errors.append("Due date must be today or future")
-            if currency not in {"INR","USD","EUR"}: errors.append("Invalid currency")
-            if not (0 <= labor_cost <= 50000): errors.append("Labor cost out of range")
-            if not (0 <= parts_cost <= 200000): errors.append("Parts cost out of range")
+
+            
+            # VALIDATE INVOICE ID
+            
+            if not re.fullmatch(r"INV-\d{5}", invoice_id.strip()):
+                errors.append("Invoice ID must be in format INV-12345")
+
+            
+            # NAME VALIDATION
+            
+            if not name.strip():
+                errors.append("Customer name is required")
+
+            
+            # DATE VALIDATION
+            
+            if issue_date > date.today():
+                errors.append("Issue date cannot be in the future")
+
+            if due_date < date.today():
+                errors.append("Due date must be today or later")
+
+            
+            # NUMERIC FIELDS VALIDATION
+            
+            # Convert safely
+            try:
+                labor_cost = float(labor_cost_str)
+            except:
+                labor_cost = -1
+                errors.append("Labor cost must be a valid number")
+
+            try:
+                parts_cost = float(parts_cost_str)
+            except:
+                parts_cost = -1
+                errors.append("Parts cost must be a valid number")
+
+            # Ranges
+            if not (0 <= labor_cost <= 50000):
+                errors.append("Labor cost must be between 0 and 50,000")
+
+            if not (0 <= parts_cost <= 200000):
+                errors.append("Parts cost must be between 0 and 200,000")
+
+            
+            # IF ERRORS → SHOW THEM
+            
             if errors:
-                for e in errors: st.error(e)
+                st.error("Please fix the following issues:")
+                for e in errors:
+                    st.write(f"- {e}")
+
             else:
+                
+                # BUILD PAYLOAD
+                
                 payload = {
                     "invoice_id": invoice_id.strip(),
                     "name": name.strip(),
                     "issue_date": issue_date.isoformat(),
                     "due_date": due_date.isoformat(),
                     "currency": currency,
-                    "labor_cost": float(labor_cost),
-                    "parts_cost": float(parts_cost),
+                    "labor_cost": labor_cost,
+                    "parts_cost": parts_cost,
                 }
+
                 s, r = api_post("/invoices/", payload)
                 show_api_response(s, r)
-
