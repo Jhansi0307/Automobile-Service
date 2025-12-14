@@ -19,7 +19,7 @@ class InvoiceCreate(BaseModel):
     currency: str
     labor_cost: Union[StrictInt, StrictFloat]
     parts_cost: Union[StrictInt, StrictFloat]
-    total_cost: Union[StrictInt, StrictFloat]
+    total_cost: Optional[Union[StrictInt, StrictFloat]] = None
     notes: Optional[str]
     @validator("invoice_id")
     def invoice_format(cls, v):
@@ -85,15 +85,17 @@ class InvoiceCreate(BaseModel):
         parts = values.get("parts_cost")
         total = values.get("total_cost")
 
-        if labor is not None and parts is not None and total is not None:
-            expected = labor + parts
-            if abs(total - expected) > 0.01:
-                raise ValueError(
-                    f"Total cost must be labor_cost + parts_cost "
-                    f"({labor} + {parts} = {expected})"
-                )
+        # If total_cost is NOT provided → allow
+        if total is None:
+            return values
+
+        expected = labor + parts
+        if abs(total - expected) > 0.01:
+            raise ValueError(
+                f"Total cost must be labor_cost + parts_cost "
+                f"({labor} + {parts} = {expected})"
+            )
         return values
-    
 class InvoiceOut(BaseModel):
     id: int
     invoice_id: str
